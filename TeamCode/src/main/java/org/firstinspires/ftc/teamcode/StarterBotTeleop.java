@@ -255,6 +255,7 @@ public class StarterBotTeleop extends OpMode {
 
         if(leftBumperPressed){
             servoPressed = true;
+            servoElapsedTimer.reset();
         }
 
         if(servoPressed) {
