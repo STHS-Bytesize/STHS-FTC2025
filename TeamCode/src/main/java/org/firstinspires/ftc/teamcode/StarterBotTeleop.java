@@ -71,8 +71,8 @@ public class StarterBotTeleop extends OpMode {
      * velocity. Here we are setting the target, and minimum velocity that the launcher should run
      * at. The minimum velocity is a threshold for determining when to fire.
      */
-    double LAUNCHER_TARGET_VELOCITY = 1125;
-    double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
+    final double LAUNCHER_TARGET_VELOCITY = 1125;
+    final double LAUNCHER_MIN_VELOCITY = 1075;
 
     // Declare OpMode members.
     private DcMotor leftDrive = null;
@@ -82,10 +82,6 @@ public class StarterBotTeleop extends OpMode {
     private CRServo rightFeeder = null;
 
     ElapsedTime feederTimer = new ElapsedTime();
-    ElapsedTime launcherIdleTimer = new ElapsedTime();
-    ElapsedTime triggerCooldown = new ElapsedTime();
-    double triggerMinTimeBetweenShots = 0.1;
-
 
     /*
      * TECH TIP: State Machines
@@ -115,8 +111,6 @@ public class StarterBotTeleop extends OpMode {
     // Setup a variable for each drive wheel to save power level for telemetry
     double leftPower;
     double rightPower;
-
-    int shootCounter = 0;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -220,7 +214,6 @@ public class StarterBotTeleop extends OpMode {
          */
         if (gamepad1.y) {
             launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-            launcherIdleTimer.reset();
         } else if (gamepad1.b) { // stop flywheel
             launcher.setVelocity(STOP_SPEED);
         }
@@ -228,31 +221,8 @@ public class StarterBotTeleop extends OpMode {
         /*
          * Now we call our "Launch" function.
          */
-        boolean rightBumperPressed = gamepad1.rightBumperWasPressed();
-        boolean rightTriggerPressed = gamepad1.right_trigger > 0.5;
 
-        boolean firePressed = false;
-
-        if (rightBumperPressed) {
-            LAUNCHER_TARGET_VELOCITY = 1400;
-            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
-            shootCounter++;
-        }
-
-        if (rightTriggerPressed && triggerCooldown.seconds() > triggerMinTimeBetweenShots){
-            LAUNCHER_TARGET_VELOCITY = 1125;
-            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
-            firePressed = true;
-            triggerCooldown.reset();
-        }
-
-        if (firePressed || shootCounter > 0){
-            launch(true);
-        }
-
-        if (launcher.getVelocity() > 50 && launcherIdleTimer.seconds() > 5.0) {
-            launcher.setVelocity(STOP_SPEED);
-        }
+        launch(gamepad1.rightBumperWasPressed());
 
         /*
          * Show the state and motor powers
@@ -260,14 +230,6 @@ public class StarterBotTeleop extends OpMode {
         telemetry.addData("State", launchState);
         telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
         telemetry.addData("motorSpeed", launcher.getVelocity());
-        telemetry.addData("Launcher",
-                "Vel: %.0f  |  State: %s  |  AutoOff: %s",
-                launcher.getVelocity(),
-                launchState,
-                (launcher.getVelocity() > 50)
-                        ? String.format("%.1fs", Math.max(0, 5.0 - launcherIdleTimer.seconds()))
-                        : "Stopped"
-        );
 
     }
 
@@ -294,14 +256,10 @@ public class StarterBotTeleop extends OpMode {
             case IDLE:
                 if (shotRequested) {
                     launchState = LaunchState.SPIN_UP;
-                    if (shootCounter > 0) {
-                        shootCounter--;
-                    }
                 }
                 break;
             case SPIN_UP:
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                launcherIdleTimer.reset();
                 if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
                     launchState = LaunchState.LAUNCH;
                 }
@@ -310,7 +268,6 @@ public class StarterBotTeleop extends OpMode {
                 leftFeeder.setPower(FULL_SPEED);
                 rightFeeder.setPower(FULL_SPEED);
                 feederTimer.reset();
-                launcherIdleTimer.reset();
                 launchState = LaunchState.LAUNCHING;
                 break;
             case LAUNCHING:
