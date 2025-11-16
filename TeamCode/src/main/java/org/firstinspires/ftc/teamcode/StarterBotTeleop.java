@@ -71,8 +71,8 @@ public class StarterBotTeleop extends OpMode {
      * velocity. Here we are setting the target, and minimum velocity that the launcher should run
      * at. The minimum velocity is a threshold for determining when to fire.
      */
-    final double LAUNCHER_TARGET_VELOCITY = 1125;
-    final double LAUNCHER_MIN_VELOCITY = 1075;
+    double LAUNCHER_TARGET_VELOCITY = 1125;
+    double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
 
     // Declare OpMode members.
     private DcMotor leftDrive = null;
@@ -85,6 +85,7 @@ public class StarterBotTeleop extends OpMode {
     ElapsedTime launcherIdleTimer = new ElapsedTime();
     ElapsedTime triggerCooldown = new ElapsedTime();
     double triggerMinTimeBetweenShots = 0.1;
+
 
     /*
      * TECH TIP: State Machines
@@ -114,6 +115,8 @@ public class StarterBotTeleop extends OpMode {
     // Setup a variable for each drive wheel to save power level for telemetry
     double leftPower;
     double rightPower;
+
+    int shootCounter = 0;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -231,15 +234,19 @@ public class StarterBotTeleop extends OpMode {
         boolean firePressed = false;
 
         if (rightBumperPressed) {
-            firePressed = true;
+            LAUNCHER_TARGET_VELOCITY = 1400;
+            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
+            shootCounter++;
         }
 
         if (rightTriggerPressed && triggerCooldown.seconds() > triggerMinTimeBetweenShots){
+            LAUNCHER_TARGET_VELOCITY = 1125;
+            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
             firePressed = true;
             triggerCooldown.reset();
         }
 
-        if (firePressed){
+        if (firePressed || shootCounter > 0){
             launch(true);
         }
 
@@ -287,6 +294,9 @@ public class StarterBotTeleop extends OpMode {
             case IDLE:
                 if (shotRequested) {
                     launchState = LaunchState.SPIN_UP;
+                    if (shootCounter > 0) {
+                        shootCounter--;
+                    }
                 }
                 break;
             case SPIN_UP:
