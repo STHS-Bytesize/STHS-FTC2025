@@ -84,34 +84,17 @@ public class StarterBotAutoShoot extends OpMode {
      */
     final double TIME_BETWEEN_SHOTS = 2;
 
-    /*
-     * Here we capture a few variables used in driving the robot. DRIVE_SPEED and ROTATE_SPEED
-     * are from 0-1, with 1 being full speed. Encoder ticks per revolution is specific to the motor
-     * ratio that we use in the kit; if you're using a different motor, this value can be found on
-     * the product page for the motor you're using.
-     * Track width is the distance between the center of the drive wheels on either side of the
-     * robot. Track width is used to determine the amount of linear distance each wheel needs to
-     * travel to create a specified rotation of the robot.
-     */
-    final double DRIVE_SPEED = 0.5;
-    final double ROTATE_SPEED = 0.2;
-    final double WHEEL_DIAMETER_MM = 96;
-    final double ENCODER_TICKS_PER_REV = 537.7;
-    final double TICKS_PER_MM = (ENCODER_TICKS_PER_REV / (WHEEL_DIAMETER_MM * Math.PI));
-    final double TRACK_WIDTH_MM = 404;
 
     int shotsToFire = 3; //The number of shots to fire in this auto.
 
-    double robotRotationAngle = 45;
 
     /*
      * Here we create three timers which we use in different parts of our code. Each of these is an
      * "object," so even though they are all an instance of ElapsedTime(), they count independently
      * from each other.
      */
-    private ElapsedTime shotTimer = new ElapsedTime();
-    private ElapsedTime feederTimer = new ElapsedTime();
-    private ElapsedTime driveTimer = new ElapsedTime();
+    private final ElapsedTime shotTimer = new ElapsedTime();
+    private final ElapsedTime feederTimer = new ElapsedTime();
 
     // Declare OpMode members.
     private DcMotor leftDrive = null;
@@ -145,25 +128,11 @@ public class StarterBotAutoShoot extends OpMode {
     private LaunchState launchState;
 
     /*
-     * Here is our auto state machine enum. This captures each action we'd like to do in auto.
-     */
-    private enum AutonomousState {
-        LAUNCH,
-        WAIT_FOR_LAUNCH,
-        DRIVING_AWAY_FROM_GOAL,
-        ROTATING,
-        DRIVING_OFF_LINE,
-        COMPLETE;
-    }
-
-    private AutonomousState autonomousState;
-
-    /*
      * Here we create an enum not to create a state machine, but to capture which alliance we are on.
      */
     private enum Alliance {
         RED,
-        BLUE;
+        BLUE
     }
 
     /*
@@ -176,15 +145,8 @@ public class StarterBotAutoShoot extends OpMode {
      */
     @Override
     public void init() {
-        /*
-         * Here we set the first step of our autonomous state machine by setting autoStep = AutoStep.LAUNCH.
-         * Later in our code, we will progress through the state machine by moving to other enum members.
-         * We do the same for our launcher state machine, setting it to IDLE before we use it later.
-         */
-        autonomousState = AutonomousState.LAUNCH;
+
         launchState = LaunchState.IDLE;
-
-
         /*
          * Initialize the hardware variables. Note that the strings used here as parameters
          * to 'get' must correspond to the names assigned during the robot configuration
@@ -279,7 +241,7 @@ public class StarterBotAutoShoot extends OpMode {
      */
     @Override
     public void start() {
-        for (int i=0; i<=3; i++){
+        for (int i=1; i<=shotsToFire; i++){
             launch(true);
         }
     }
