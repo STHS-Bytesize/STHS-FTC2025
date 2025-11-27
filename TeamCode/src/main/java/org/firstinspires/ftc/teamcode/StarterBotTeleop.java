@@ -268,7 +268,7 @@ public class StarterBotTeleop extends OpMode {
          * Show the state and motor powers
          */
         telemetry.addData("State", launchState);
-        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftFrontPower, rightFrontPower);
+        telemetry.addData("Motors", "left front (%.2f), right front (%.2f), left back (%.2f), right back (%.2f)", leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
         telemetry.addData("motorSpeed", launcher.getVelocity());
         telemetry.addData("Launcher",
                 "Vel: %.0f  |  State: %s  |  AutoOff: %s",
