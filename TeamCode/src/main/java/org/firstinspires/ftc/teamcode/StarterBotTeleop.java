@@ -25,7 +25,7 @@
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, CONTRACT, STRICT LIABILITY, OR
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
@@ -75,10 +75,8 @@ public class StarterBotTeleop extends OpMode {
     double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
 
     // Declare OpMode members.
-    private DcMotor leftFrontDrive = null;
-    private DcMotor rightFrontDrive = null;
-    private DcMotor leftBackDrive = null;
-    private DcMotor rightBackDrive = null;
+    private DcMotor leftDrive = null;
+    private DcMotor rightDrive = null;
     private DcMotorEx launcher = null;
     private CRServo leftFeeder = null;
     private CRServo rightFeeder = null;
@@ -86,7 +84,7 @@ public class StarterBotTeleop extends OpMode {
     ElapsedTime feederTimer = new ElapsedTime();
     ElapsedTime launcherIdleTimer = new ElapsedTime();
     ElapsedTime triggerCooldown = new ElapsedTime();
-    double triggerMinTimeBetweenShots = 0.14;
+    double triggerMinTimeBetweenShots = 0.1;
 
 
     /*
@@ -109,17 +107,14 @@ public class StarterBotTeleop extends OpMode {
         IDLE,
         SPIN_UP,
         LAUNCH,
-        // LAUNCHING state removed for simpler implementation
+        LAUNCHING,
     }
 
     private LaunchState launchState;
 
     // Setup a variable for each drive wheel to save power level for telemetry
-    // Setup a variable for each drive wheel to save power level for telemetry
-    double leftFrontPower;
-    double rightFrontPower;
-    double leftBackPower;
-    double rightBackPower;
+    double leftPower;
+    double rightPower;
 
     int shootCounter = 0;
 
@@ -135,10 +130,8 @@ public class StarterBotTeleop extends OpMode {
          * to 'get' must correspond to the names assigned during the robot configuration
          * step.
          */
-        leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
-        leftBackDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
+        leftDrive = hardwareMap.get(DcMotor.class, "left_drive");
+        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
         leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
         rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
@@ -150,10 +143,8 @@ public class StarterBotTeleop extends OpMode {
          * Note: The settings here assume direct drive on left and right wheels. Gear
          * Reduction or 90 Deg drives may require direction flips
          */
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         /*
          * Here we set our launcher to the RUN_USING_ENCODER runmode.
@@ -169,10 +160,8 @@ public class StarterBotTeleop extends OpMode {
          * slow down much faster when it is coasting. This creates a much more controllable
          * drivetrain. As the robot stops much quicker.
          */
-        leftFrontDrive.setZeroPowerBehavior(BRAKE);
-        rightFrontDrive.setZeroPowerBehavior(BRAKE);
-        leftBackDrive.setZeroPowerBehavior(BRAKE);
-        rightBackDrive.setZeroPowerBehavior(BRAKE);
+        leftDrive.setZeroPowerBehavior(BRAKE);
+        rightDrive.setZeroPowerBehavior(BRAKE);
         launcher.setZeroPowerBehavior(BRAKE);
 
         /*
@@ -223,7 +212,8 @@ public class StarterBotTeleop extends OpMode {
          * both motors work to rotate the robot. Combinations of these inputs can be used to create
          * more complex maneuvers.
          */
-        mecanumDrive(-gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+        arcadeDrive(-gamepad1.left_stick_y, gamepad1.right_stick_x);
+
         /*
          * Here we give the user control of the speed of the launcher motor without automatically
          * queuing a shot.
@@ -238,21 +228,20 @@ public class StarterBotTeleop extends OpMode {
         /*
          * Now we call our "Launch" function.
          */
-        boolean rightBumperPressed = gamepad1.right_bumper; // Changed to instant press detection for better rapid fire
+        boolean rightBumperPressed = gamepad1.rightBumperWasPressed();
         boolean rightTriggerPressed = gamepad1.right_trigger > 0.5;
 
         boolean firePressed = false;
 
         if (rightBumperPressed) {
             LAUNCHER_TARGET_VELOCITY = 1400;
-            LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
+            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
             shootCounter++;
         }
 
-        // Only allow firing if the trigger is pressed AND the cooldown has expired
         if (rightTriggerPressed && triggerCooldown.seconds() > triggerMinTimeBetweenShots){
             LAUNCHER_TARGET_VELOCITY = 1125;
-            LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
+            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
             firePressed = true;
             triggerCooldown.reset();
         }
@@ -269,7 +258,7 @@ public class StarterBotTeleop extends OpMode {
          * Show the state and motor powers
          */
         telemetry.addData("State", launchState);
-        telemetry.addData("Motors", "left front (%.2f), right front (%.2f), left back (%.2f), right back (%.2f)", leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
+        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
         telemetry.addData("motorSpeed", launcher.getVelocity());
         telemetry.addData("Launcher",
                 "Vel: %.0f  |  State: %s  |  AutoOff: %s",
@@ -279,6 +268,7 @@ public class StarterBotTeleop extends OpMode {
                         ? String.format("%.1fs", Math.max(0, 5.0 - launcherIdleTimer.seconds()))
                         : "Stopped"
         );
+
     }
 
     /*
@@ -288,81 +278,46 @@ public class StarterBotTeleop extends OpMode {
     public void stop() {
     }
 
-    void mecanumDrive(double forward, double strafe, double rotate){
+    void arcadeDrive(double forward, double rotate) {
+        leftPower = forward + rotate;
+        rightPower = forward - rotate;
 
-        /* the denominator is the largest motor power (absolute value) or 1
-         * This ensures all the powers maintain the same ratio,
-         * but only if at least one is out of the range [-1, 1]
+        /*
+         * Send calculated power to wheels
          */
-        double denominator = Math.max(Math.abs(forward) + Math.abs(strafe) + Math.abs(rotate), 1);
-
-        leftFrontPower = (forward + strafe + rotate) / denominator;
-        rightFrontPower = (forward - strafe - rotate) / denominator;
-        leftBackPower = (forward - strafe + rotate) / denominator;
-        rightBackPower = (forward + strafe - rotate) / denominator;
-
-        leftFrontDrive.setPower(leftFrontPower);
-        rightFrontDrive.setPower(rightFrontPower);
-        leftBackDrive.setPower(leftBackPower);
-        rightBackDrive.setPower(rightBackPower);
-
+        leftDrive.setPower(leftPower);
+        rightDrive.setPower(rightPower);
     }
 
-    /**
-     * Corrected launch function: Ensures the launcher is up to speed before
-     * activating the feeder servos.
-     * @param shotRequested True if a shot is requested by the driver.
-     */
     void launch(boolean shotRequested) {
         switch (launchState) {
             case IDLE:
-                // Check if a shot is requested
                 if (shotRequested) {
-                    // Check if the launcher is ALREADY up to speed
-                    if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
-                        // If ready, skip spin-up and go straight to launch
-                        launchState = LaunchState.LAUNCH;
-                        // Since we are skipping SPIN_UP, we set the velocity here
-                        launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                    } else {
-                        // If not up to speed, enter the spin-up phase
-                        launchState = LaunchState.SPIN_UP;
-                    }
-
+                    launchState = LaunchState.SPIN_UP;
                     if (shootCounter > 0) {
                         shootCounter--;
                     }
                 }
                 break;
-
             case SPIN_UP:
-                // Always ensure the target velocity is set
-
-                // Start the feeder servos
-                leftFeeder.setPower(FULL_SPEED);
-                rightFeeder.setPower(FULL_SPEED);
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
                 launcherIdleTimer.reset();
-
-                // Once the motor reaches minimum speed, transition to LAUNCH
                 if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
                     launchState = LaunchState.LAUNCH;
                 }
                 break;
-
             case LAUNCH:
-                // Reset the timer when the servos start to track run time
-                if (feederTimer.seconds() < 0.001) { // Check if the timer was just reset (or close to 0)
-                    feederTimer.reset();
-                    launcherIdleTimer.reset();
-                }
-
-                // Wait until the required feed time has passed
+                leftFeeder.setPower(FULL_SPEED);
+                rightFeeder.setPower(FULL_SPEED);
+                feederTimer.reset();
+                launcherIdleTimer.reset();
+                launchState = LaunchState.LAUNCHING;
+                break;
+            case LAUNCHING:
                 if (feederTimer.seconds() > FEED_TIME_SECONDS) {
-                    // Stop the feeder servos and return to idle
+                    launchState = LaunchState.IDLE;
                     leftFeeder.setPower(STOP_SPEED);
                     rightFeeder.setPower(STOP_SPEED);
-                    launchState = LaunchState.IDLE;
                 }
                 break;
         }
