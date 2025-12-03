@@ -245,13 +245,13 @@ public class StarterBotTeleop extends OpMode {
 
         if (rightBumperPressed) {
             LAUNCHER_TARGET_VELOCITY = 1400;
-            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
+            LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
             shootCounter++;
         }
 
         if (rightTriggerPressed && triggerCooldown.seconds() > triggerMinTimeBetweenShots){
             LAUNCHER_TARGET_VELOCITY = 1125;
-            double LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
+            LAUNCHER_MIN_VELOCITY = LAUNCHER_TARGET_VELOCITY - 50;
             firePressed = true;
             triggerCooldown.reset();
         }
