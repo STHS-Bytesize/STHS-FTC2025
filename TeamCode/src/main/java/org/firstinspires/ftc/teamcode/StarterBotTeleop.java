@@ -86,7 +86,7 @@ public class StarterBotTeleop extends OpMode {
     ElapsedTime feederTimer = new ElapsedTime();
     ElapsedTime launcherIdleTimer = new ElapsedTime();
     ElapsedTime triggerCooldown = new ElapsedTime();
-    double triggerMinTimeBetweenShots = 0.178;
+    double triggerMinTimeBetweenShots = 0.14;
 
 
     /*
@@ -278,7 +278,6 @@ public class StarterBotTeleop extends OpMode {
                         ? String.format("%.1fs", Math.max(0, 5.0 - launcherIdleTimer.seconds()))
                         : "Stopped"
         );
-
     }
 
     /*
